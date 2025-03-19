@@ -1,9 +1,10 @@
+require("dotenv").config();
 const { default: mongoose } = require("mongoose")
-
+const mongoDBUriString = process.env.MONGODB_URI_STRING;
 
 const connectDB = async() => {
     try {
-        await mongoose.connect('mongodb+srv://jishnusnair22:OHr63Sc87oFt6GFI@cluster0.zucla.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+        await mongoose.connect(mongoDBUriString)
         console.log('DB connected successfully');
         
     } catch(err) {

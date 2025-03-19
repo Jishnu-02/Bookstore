@@ -1,10 +1,16 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
-const port = 9999
+const port = process.env.PORT
 const InventoryRoutes = require('./routes/inventoryRoutes')
 app.use(express.json())
+const connectDB = require('./config/db');
+const { booksRouter } = require('./routes/bookRoutes')
+
+connectDB();
 
 app.use('/', InventoryRoutes)
+app.use('/api/v1/books', booksRouter)
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
