@@ -3,34 +3,62 @@ const Book = require('../models/bookModel')
 
 const router = express.Router()
 
-router.post('/create', async(req, res) => {
+router.post('/create', async (req, res) => {
     try {
-        const {title, author, genre, price, stock} = req.body
+        const books = req.body;
 
-        const isBookExist = await Book.findOne({title:title})
-        if(isBookExist) {
+        if (!Array.isArray(books) || books.length === 0) {
             return res.status(400).json({
-                message: "Book already exists, update the stock of the existing book",
+                message: "Invalid input. Please provide an array of books.",
                 success: false
-            })
+            });
         }
 
-        const book = new Book({title, author, genre, price, stock})
-        book.save()
+        const titles = books.map(book => book.title);
+
+        const existingBooks = await Book.find({ title: { $in: titles } });
+
+        if (existingBooks.length > 0) {
+            return res.status(400).json({
+                message: "Some books already exist. Consider updating their stock.",
+                existingBooks: existingBooks.map(book => book.title),
+                success: false
+            });
+        }
+
+        await Book.insertMany(books);
 
         res.status(201).json({
-            message: 'Book successfully created',
+            message: 'Books successfully created',
             success: true
-        })
+        });
+
     } catch (err) {
-        res.status(400).json(err)
+        res.status(500).json({ error: err.message });
     }
-})
+});
+
 
 router.get('/booksList', async(req, res) => {
     try {
-        const bookList = await Book.find()
-        return res.json({
+
+        const {author} = req.query
+        let bookList;
+        
+        if(author) {
+            bookList = await Book.find({ author: { $regex: new RegExp(author, "i") } });
+
+            if (bookList.length === 0) {
+                return res.status(404).json({
+                    message: `No books found for author: ${author}`,
+                    success: false
+                });
+            }
+        } else {
+            bookList = await Book.find()
+        }
+
+        res.json({
             data: bookList,
             success: true
         })
@@ -73,5 +101,28 @@ router.delete('/:id', async(req, res) => {
     }
 })
 
+router.get('/count', async(req, res) => {
+    try {
+        const totalBooks = await Book.countDocuments();
+        res.status(200).json({
+            totalBooks,
+            success:true
+        })
+    } catch(err) {
+        res.status(400).json(err)
+    }
+})
+
+router.get('/sortByPrice', async(req, res) => {
+    try {
+        const bookList = await Book.find().sort({price: 1});
+        res.status(200).json({
+            bookList,
+            success:true
+        })
+    } catch(err) {
+        res.status(400).json(err)
+    }
+})
 
 module.exports = {booksRouter: router}
