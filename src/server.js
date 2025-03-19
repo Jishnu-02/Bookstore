@@ -2,14 +2,12 @@ require('dotenv').config()
 const express = require('express')
 const app = express()
 const port = process.env.PORT
-const InventoryRoutes = require('./routes/inventoryRoutes')
 app.use(express.json())
 const connectDB = require('./config/db');
 const { booksRouter } = require('./routes/bookRoutes')
 
 connectDB();
 
-app.use('/', InventoryRoutes)
 app.use('/api/v1/books', booksRouter)
 
 app.listen(port, () => {
